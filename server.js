@@ -1,26 +1,46 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).send("Método no permitido. Usa POST.");
-  }
+dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 3000;
+
+// Gemini
+if (!process.env.GEMINI_API_KEY) {
+  console.error("Falta GEMINI_API_KEY en .env");
+  process.exit(1);
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "models/gemini-2.5-pro",
+});
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public"))); // Sirve frontend
+
+// ENDPOINT STREAM
+app.post("/api/chat-stream", async (req, res) => {
   const { message } = req.body;
-  if (!message) return res.status(400).send("Mensaje vacío.");
-
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("❌ Falta GEMINI_API_KEY en variables de entorno");
-    return res.status(500).send("Falta configuración del servidor.");
+  if (!message) {
+    return res.status(400).send("Mensaje vacío.");
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-pro" });
-
     const generationConfig = {
       temperature: 0.3,
       topP: 0.8,
@@ -39,10 +59,11 @@ export default async function handler(req, res) {
       history: [],
     });
 
+    // ✅ SISTEMA OPTIMIZADO - Más rápido y directo
     const systemPrompt = `Eres un profesor experto en transmisión de datos y redes. 
 Responde de manera seria, clara y profesional en español.
 Usa un tono académico, sin emojis ni lenguaje casual.
-Proporciona información completa y detallada según lo que el estudiante solicite.
+Sé conciso pero completo. Proporciona información directa y bien estructurada.
 
 IMPORTANTE - Formato de respuesta:
 - Usa **texto entre asteriscos** para poner en negrita
@@ -50,25 +71,33 @@ IMPORTANTE - Formato de respuesta:
 - Usa # para títulos principales, ## para subtítulos, ### para sub-subtítulos
 - Usa listas numeradas (1. 2. 3.) o viñetas (* o -) para enumeraciones
 - Separa párrafos con líneas en blanco
-- Usa líneas de separación (***) entre secciones importantes
+- Ve directo al punto sin introducciones largas`;
 
-Si pide una lista, proporciona la lista completa con todas las descripciones.`;
+    const userMessage = `${systemPrompt}\n\nPregunta: ${message}`;
 
-    const userMessage = `${systemPrompt}\n\nPregunta del estudiante: ${message}`;
     const result = await chat.sendMessageStream(userMessage);
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Transfer-Encoding", "chunked");
 
     res.write("[STREAM-START]\n");
+
     for await (const chunk of result.stream) {
       const text = chunk.text();
-      if (text) res.write(text);
+      if (text) {
+        res.write(text);
+      }
     }
+
     res.write("\n[STREAM-END]\n");
     res.end();
-  } catch (error) {
-    console.error("Error desde Gemini:", error);
-    res.status(500).send("Error interno del servidor.");
+  } catch (err) {
+    console.error("Error desde Gemini:", err);
+    res.write("[STREAM-ERROR]\n");
+    res.end();
   }
-}
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+});
