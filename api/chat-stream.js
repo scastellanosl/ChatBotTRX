@@ -4,7 +4,7 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).send("Método no permitido. Usa POST.");
   }
@@ -71,4 +71,4 @@ Si pide una lista, proporciona la lista completa con todas las descripciones.`;
     console.error("Error desde Gemini:", error);
     res.status(500).send("Error interno del servidor.");
   }
-}
+};
