@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Experto en Transmisión de Datos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+          Arial, sans-serif;
+        background: #0d0d0d;
+        color: #ececf1;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Header */
+      .header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #444;
+        background: #1a1a1a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .header-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ececf1;
+      }
+
+      /* Messages Container */
+      #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      #messages::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      #messages::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #messages::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 4px;
+      }
+
+      #messages::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      /* Mensaje */
+      .msg {
+        display: flex;
+        animation: slideIn 0.3s ease-out;
+        width: 100%;
+      }
+
+      .msg.user {
+        justify-content: flex-end;
+      }
+
+      .msg.bot {
+        justify-content: flex-start;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Bubble */
+      .bubble {
+        max-width: 80%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        line-height: 1.6;
+        font-size: 15px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .bubble.user {
+        background: #0084ff;
+        color: white;
+        border-radius: 12px;
+      }
+
+      .bubble.bot {
+        background: #2a2a2a;
+        color: #ececf1;
+        border-radius: 12px;
+      }
+
+      /* Estilos para markdown */
+      .bubble h1,
+      .bubble h2,
+      .bubble h3,
+      .bubble h4 {
+        margin: 12px 0 8px 0;
+        font-weight: 600;
+      }
+
+      .bubble h1 {
+        font-size: 18px;
+      }
+      .bubble h2 {
+        font-size: 16px;
+      }
+      .bubble h3 {
+        font-size: 14px;
+      }
+
+      .bubble ul,
+      .bubble ol {
+        margin: 8px 0 8px 20px;
+      }
+
+      .bubble li {
+        margin: 6px 0;
+      }
+
+      .bubble strong {
+        font-weight: 600;
+      }
+      .bubble em {
+        font-style: italic;
+      }
+
+      .bubble hr {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 12px 0;
+      }
+
+      .bubble code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .bubble pre {
+        background: #1a1a1a;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 8px 0;
+        font-size: 13px;
+      }
+
+      /* Input Area */
+      .input-area {
+        padding: 20px 24px;
+        background: #0d0d0d;
+        border-top: 1px solid #444;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 12px 24px;
+        background: #0d0d0d;
+        border-top: 1px solid #444;
+        text-align: center;
+        font-size: 13px;
+        color: #888;
+      }
+
+      .input-wrapper {
+        width: 100%;
+        max-width: 900px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+
+      #input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #444;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        background: #2a2a2a;
+        color: #ececf1;
+        transition: border-color 0.2s;
+        resize: none;
+        max-height: 200px;
+        min-height: 44px;
+        overflow-y: auto;
+      }
+
+      #input::placeholder {
+        color: #888;
+      }
+
+      #input:focus {
+        outline: none;
+        border-color: #0084ff;
+      }
+
+      /* Botones */
+      .button-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        padding: 10px 16px;
+        background: #0084ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+      }
+
+      button:hover {
+        background: #0073e6;
+        transform: scale(1.02);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: scale(1);
+      }
+
+      #clear {
+        background: #555;
+      }
+
+      #clear:hover {
+        background: #666;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        #messages {
+          padding: 16px;
+          max-width: 100%;
+        }
+
+        .bubble {
+          max-width: 95%;
+        }
+
+        .input-area {
+          padding: 16px;
+        }
+
+        .input-wrapper {
+          flex-direction: column;
+        }
+
+        .button-group {
+          width: 100%;
+        }
+
+        button {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-title">Experto en Transmisión de Datos</div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="input"
+          rows="1"
+          placeholder="Escribe tu pregunta técnica..."
+        ></textarea>
+        <div class="button-group">
+          <button id="send">Enviar</button>
+          <button id="clear">Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Desarrollado por Sebastián Castellanos Leguizamón</div>
+
+    <script>
+      const messagesEl = document.getElementById("messages");
+      const inputEl = document.getElementById("input");
+      const sendBtn = document.getElementById("send");
+      const clearBtn = document.getElementById("clear");
+
+      // Auto-expand textarea
+      inputEl.addEventListener("input", () => {
+        inputEl.style.height = "auto";
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + "px";
+      });
+
+      function createMessageEl(role, text) {
+        const wrap = document.createElement("div");
+        wrap.className = "msg " + (role === "user" ? "user" : "bot");
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble " + (role === "user" ? "user" : "bot");
+
+        if (role === "bot") {
+          bubble.innerHTML = convertMarkdownToHTML(text);
+        } else {
+          bubble.textContent = text;
+        }
+
+        wrap.appendChild(bubble);
+        messagesEl.appendChild(wrap);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+        return bubble;
+      }
+
+      function convertMarkdownToHTML(text) {
+        if (!text) return "";
+
+        let html = text;
+
+        html = html.replace(/^\*\*\*\s*$/gm, "<hr>");
+        html = html.replace(/^---\s*$/gm, "<hr>");
+
+        html = html.replace(/^### (.*?)$/gm, "<h3>$1</h3>");
+        html = html.replace(/^## (.*?)$/gm, "<h2>$1</h2>");
+        html = html.replace(/^# (.*?)$/gm, "<h1>$1</h1>");
+
+        html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        html = html.replace(
+          /(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g,
+          "<em>$1</em>"
+        );
+
+        const lines = html.split("\n");
+        let inList = false;
+        let listType = null;
+        let processed = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          if (/^\d+\.\s+/.test(line)) {
+            if (!inList || listType !== "ol") {
+              if (inList) processed.push(`</${listType}>`);
+              processed.push("<ol>");
+              inList = true;
+              listType = "ol";
+            }
+            processed.push("<li>" + line.replace(/^\d+\.\s+/, "") + "</li>");
+          } else if (/^[\*\-]\s+/.test(line)) {
+            if (!inList || listType !== "ul") {
+              if (inList) processed.push(`</${listType}>`);
+              processed.push("<ul>");
+              inList = true;
+              listType = "ul";
+            }
+            processed.push("<li>" + line.replace(/^[\*\-]\s+/, "") + "</li>");
+          } else {
+            if (inList) {
+              processed.push(`</${listType}>`);
+              inList = false;
+              listType = null;
+            }
+            if (line.trim()) {
+              processed.push(line);
+            }
+          }
+        }
+
+        if (inList) {
+          processed.push(`</${listType}>`);
+        }
+
+        html = processed.join("\n");
+
+        return html;
+      }
+
+      sendBtn.onclick = async () => {
+        const txt = inputEl.value.trim();
+        if (!txt) return;
+
+        inputEl.disabled = true;
+        sendBtn.disabled = true;
+
+        createMessageEl("user", txt);
+        inputEl.value = "";
+        inputEl.style.height = "auto";
+
+        const botBubble = createMessageEl("bot", "⏳ Procesando...");
+
+        try {
+          const controller = new AbortController();
+
+          const resp = await fetch("/api/chat-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: txt }),
+            signal: controller.signal,
+          });
+
+          if (!resp.ok) {
+            const err = await resp.text();
+            botBubble.textContent = "❌ Error: " + (err || resp.statusText);
+            return;
+          }
+
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let accumulated = "";
+          let updateScheduled = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const cleaned = chunk
+              .replace(/\[STREAM-START\]\n?/g, "")
+              .replace(/\[STREAM-END\]\n?/g, "")
+              .replace(/\[STREAM-ERROR\]\n?/g, "");
+
+            accumulated += cleaned;
+
+            // Renderizar formato en tiempo real sin bloquear
+            if (!updateScheduled) {
+              updateScheduled = true;
+              requestAnimationFrame(() => {
+                botBubble.innerHTML =
+                  convertMarkdownToHTML(accumulated) || "⏳ Procesando...";
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                updateScheduled = false;
+              });
+            }
+          }
+
+          // Renderizado final para asegurar que todo esté formateado
+          const finalText = accumulated.replace(/\s+$/, "");
+          botBubble.innerHTML =
+            convertMarkdownToHTML(finalText) || "⚠️ Respuesta vacía";
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        } catch (e) {
+          console.error("Error:", e);
+          botBubble.textContent = "❌ Error: " + e.message;
+        } finally {
+          inputEl.disabled = false;
+          sendBtn.disabled = false;
+          inputEl.focus();
+        }
+      };
+
+      clearBtn.onclick = () => {
+        if (confirm("¿Limpiar el historial?")) {
+          messagesEl.innerHTML = "";
+        }
+      };
+
+      inputEl.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+    </script>
+  </body>
+</html>
