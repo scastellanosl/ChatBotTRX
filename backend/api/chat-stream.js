@@ -1,37 +1,26 @@
-import dotenv from "dotenv";
 import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
 
-dotenv.config();
-
-// Verifica que la API Key exista
-if (!process.env.GEMINI_API_KEY) {
-  console.error("Falta GEMINI_API_KEY en .env");
-  process.exit(1);
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-  model: "models/gemini-2.5-pro",
-});
-
-// Función serverless para Vercel
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).json({ error: "Método no permitido" });
-    return;
+    return res.status(405).send("Método no permitido. Usa POST.");
   }
 
   const { message } = req.body;
-  if (!message) {
-    res.status(400).json({ error: "Mensaje vacío" });
-    return;
+  if (!message) return res.status(400).send("Mensaje vacío.");
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("❌ Falta GEMINI_API_KEY en variables de entorno");
+    return res.status(500).send("Falta configuración del servidor.");
   }
 
   try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-pro" });
+
     const generationConfig = {
       temperature: 0.3,
       topP: 0.8,
@@ -66,26 +55,20 @@ IMPORTANTE - Formato de respuesta:
 Si pide una lista, proporciona la lista completa con todas las descripciones.`;
 
     const userMessage = `${systemPrompt}\n\nPregunta del estudiante: ${message}`;
-
     const result = await chat.sendMessageStream(userMessage);
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Transfer-Encoding", "chunked");
 
     res.write("[STREAM-START]\n");
-
     for await (const chunk of result.stream) {
       const text = chunk.text();
-      if (text) {
-        res.write(text);
-      }
+      if (text) res.write(text);
     }
-
     res.write("\n[STREAM-END]\n");
     res.end();
-  } catch (err) {
-    console.error("Error desde Gemini:", err);
-    res.status(500).write("[STREAM-ERROR]\n");
-    res.end();
+  } catch (error) {
+    console.error("Error desde Gemini:", error);
+    res.status(500).send("Error interno del servidor.");
   }
 }
