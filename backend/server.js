@@ -1,8 +1,4 @@
-import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 import {
   GoogleGenerativeAI,
   HarmCategory,
@@ -11,13 +7,7 @@ import {
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = 3000;
-
-// Gemini
+// Verifica que la API Key exista
 if (!process.env.GEMINI_API_KEY) {
   console.error("Falta GEMINI_API_KEY en .env");
   process.exit(1);
@@ -28,16 +18,17 @@ const model = genAI.getGenerativeModel({
   model: "models/gemini-2.5-pro",
 });
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // Sirve frontend
+// Función serverless para Vercel
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Método no permitido" });
+    return;
+  }
 
-// ENDPOINT STREAM
-app.post("/api/chat-stream", async (req, res) => {
   const { message } = req.body;
   if (!message) {
-    return res.status(400).send("Mensaje vacío.");
+    res.status(400).json({ error: "Mensaje vacío" });
+    return;
   }
 
   try {
@@ -59,7 +50,6 @@ app.post("/api/chat-stream", async (req, res) => {
       history: [],
     });
 
-    // ✅ SISTEMA MEJORADO - Con instrucciones de formato
     const systemPrompt = `Eres un profesor experto en transmisión de datos y redes. 
 Responde de manera seria, clara y profesional en español.
 Usa un tono académico, sin emojis ni lenguaje casual.
@@ -95,11 +85,7 @@ Si pide una lista, proporciona la lista completa con todas las descripciones.`;
     res.end();
   } catch (err) {
     console.error("Error desde Gemini:", err);
-    res.write("[STREAM-ERROR]\n");
+    res.status(500).write("[STREAM-ERROR]\n");
     res.end();
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-});
+}
